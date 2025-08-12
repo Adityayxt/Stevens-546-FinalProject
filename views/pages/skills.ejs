@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skills Marketplace | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/skills" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/skills" class="active-link">Skills Marketplace</a>
+        <a href="/skills/new">Publish Skill</a>
+        <a href="/profile/myskills">My Skills</a>
+        <a href="/profile/me">My Profile</a>
+        <a href="/profile/favorites">My Favorites</a>
+        <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">Skills Marketplace</h1>
+
+  <form method="GET" action="/skills" class="filter-form">
+    <div class="filter-wrap">
+      <label for="category">Filter by category:</label>
+      <select name="category" id="category" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        <% categories.forEach(cat => { %>
+          <option value="<%= cat %>" <%= currentCategory === cat ? 'selected' : '' %>><%= cat %></option>
+        <% }) %>
+      </select>
+    </div>
+  </form>
+
+  <div class="card-container">
+    <% if (skills.length === 0) { %>
+      <div class="empty-state">
+        No skills available yet. Come and publish the first skill!
+      </div>
+    <% } else { %>
+      <% skills.forEach(skill => { %>
+        <div class="card">
+          <h3 class="card-title">
+            <a href="/skills/<%= skill._id %>"><%= skill.title %></a>
+          </h3>
+          <p class="card-desc"><%= skill.description %></p>
+          <div class="card-meta">
+            <span>Category: <%= skill.category %></span>
+          </div>
+          <div class="card-meta">
+            <span>Posted by: <%= skill.postedBy.username %></span>
+          </div>
+          <div class="card-meta">
+            <span>Posted on: <%= new Date(skill.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skill Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+</body>
+</html>
+
