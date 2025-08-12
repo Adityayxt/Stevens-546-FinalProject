@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">  
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Skill | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/skills" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/skills">Skills Marketplace</a>
+        <a href="/skills/new">Publish Skill</a>
+        <a href="/profile/myskills">My Skills</a>
+        <a href="/profile/me">My Profile</a>
+        <a href="/profile/favorites">My Favorites</a>
+        <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">Edit Skill</h1>
+
+  <div class="form-card">
+    <h2 class="form-title">Modify Skill Information</h2>
+
+    <% if (typeof error !== 'undefined') { %>
+      <div class="error-message"><%= error %></div>
+    <% } %>
+    
+    <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+      <div class="error-message">
+        <% errors.forEach(error => { %>
+          <div><%= error %></div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <form action="/profile/<%= skill._id %>?_method=PUT" method="POST" class="skill-form" id="editSkillForm">
+      <div class="input-group">
+        <label for="title">Skill Title</label>
+        <input
+                type="text"
+                name="title"
+                id="title"
+                value="<%= skill.title %>"
+                placeholder="e.g., JavaScript Frontend Development"
+                required
+                style="width: 100%; max-width: 500px;"
+        />
+        <div id="titleError" class="error-text"></div>
+      </div>
+      <div class="input-group">
+        <label for="category">Skill Category</label>
+        <select name="category" id="category" required>
+          <option value="Languages & Translation" <%= skill.category === 'Languages & Translation' ? 'selected' : '' %>>Languages & Translation</option>
+          <option value="Academics & Tutoring" <%= skill.category === 'Academics & Tutoring' ? 'selected' : '' %>>Academics & Tutoring</option>
+          <option value="Programming & Technology" <%= skill.category === 'Programming & Technology' ? 'selected' : '' %>>Programming & Technology</option>
+          <option value="Design & Creativity" <%= skill.category === 'Design & Creativity' ? 'selected' : '' %>>Design & Creativity</option>
+          <option value="Music, Performing Arts & Writing" <%= skill.category === 'Music, Performing Arts & Writing' ? 'selected' : '' %>>Music, Performing Arts & Writing</option>
+          <option value="Business, Marketing & Management" <%= skill.category === 'Business, Marketing & Management' ? 'selected' : '' %>>Business, Marketing & Management</option>
+          <option value="Cooking & Culinary Arts" <%= skill.category === 'Cooking & Culinary Arts' ? 'selected' : '' %>>Cooking & Culinary Arts</option>
+          <option value="Fitness, Sports & Wellness" <%= skill.category === 'Fitness, Sports & Wellness' ? 'selected' : '' %>>Fitness, Sports & Wellness</option>
+          <option value="Lifestyle, Travel & Outdoor Activities" <%= skill.category === 'Lifestyle, Travel & Outdoor Activities' ? 'selected' : '' %>>Lifestyle, Travel & Outdoor Activities</option>
+          <option value="Finance & Investment" <%= skill.category === 'Finance & Investment' ? 'selected' : '' %>>Finance & Investment</option>
+          <option value="Other" <%= skill.category === 'Other' ? 'selected' : '' %>>Other</option>
+        </select>
+        <div id="categoryError" class="error-text"></div>
+      </div>
+      <div class="input-group">
+        <label for="description">Skill Description</label>
+        <textarea
+                name="description"
+                id="description"
+                rows="6"
+                placeholder="Describe your skill in detail, including your experience, areas of expertise, etc..."
+                required
+                style="width: 100%; max-width: 500px;"
+        ><%= skill.description %></textarea>
+        <div id="descriptionError" class="error-text"></div>
+      </div>
+
+      <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+        <button type="submit" class="btn-primary" style="flex: 1;">
+          <span>Save Changes</span>
+        </button>
+        <a href="/profile/myskills" class="btn-secondary" style="flex: 1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+          <span>Back</span>
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skill Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+
+<script src="/js/formValidation.js"></script>
+</body>
+</html>

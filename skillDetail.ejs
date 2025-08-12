@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= skill.title %> | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/skills" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/skills">Skills Marketplace</a>
+        <a href="/skills/new">Publish Skill</a>
+        <a href="/profile/myskills">My Skills</a>
+        <a href="/profile/me">My Profile</a>
+        <a href="/profile/favorites">My Favorites</a>
+        <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title"><%= skill.title %></h1>
+
+  <div class="card">
+    <p class="skill-detail-description"><%- skill.description.replace(/\n/g, '<br>') %></p>
+    <div class="card-meta">
+      <span>Category: <%= skill.category %></span>
+    </div>
+    <div class="card-meta">
+      <span>Posted by: <%= skill.postedBy.username %></span>
+    </div>
+    <div class="card-meta">
+      <span>Contact: <%= skill.postedBy.contact ? skill.postedBy.contact : 'Not provided' %></span>
+    </div>
+    <div class="card-meta">
+      <span>Posted on: <%= new Date(skill.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+    </div>
+    <div class="card-meta">
+      <span>Favorited by <%= favoriteCount %> people</span>
+    </div>
+
+    <% if (user) { %>
+      <form action="/skills/<%= skill._id %>/favorite" method="POST" style="margin-top: var(--spacing-lg);">
+        <button type="submit" class="btn-primary <%= isFavorited ? 'btn-danger' : '' %>">
+          <span><%= isFavorited ? 'Unfavorite' : 'Favorite' %></span>
+        </button>
+      </form>
+    <% } else { %>
+      <p style="margin-top: var(--spacing-lg); color: var(--gray-600);">
+        Please <a href="/auth/login" class="btn-link">login</a> to favorite this skill.
+      </p>
+    <% } %>
+  </div>
+
+  <div class="comment-section">
+    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: var(--spacing-lg);">
+      Comments
+    </h2>
+
+    <% if (comments.length === 0) { %>
+      <div class="empty-state empty-state-small">
+        <div class="empty-state-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">💬</div>
+        No comments yet, be the first to comment!
+      </div>
+    <% } else { %>
+      <% comments.forEach(comment => { %>  
+        <div class="comment">
+        
+          <strong style="color: var(--primary-color);"><%= comment.postedBy.username %></strong>
+          <span style="margin-left: var(--spacing-sm);"><%- comment.content.replace(/\n/g, '<br>') %></span>
+          <span style="display: block; margin-top: var(--spacing-xs); font-size: 0.875rem; color: var(--gray-500);">
+            <%= new Date(comment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+          </span>
+        </div>
+      <% }) %>
+    <% } %>
+
+    <% if (user) { %>
+      <div id="commentErrors" class="error-message" style="display: none; margin-bottom: var(--spacing-md);"></div>
+      <form id="commentForm" data-skill-id="<%= skill._id %>" class="comment-form">
+        <div class="input-group">
+          <textarea
+                  id="commentInput"
+                  placeholder="Write your comment..."
+                  required
+                  style="width: 100%;"
+          ></textarea>
+          <div id="commentInputError" class="error-text"</div>
+        </div>
+        <button type="submit" class="btn-primary">
+          <span>Post Comment</span>
+        </button>
+      </form>
+      <script src="/js/ajax.js"></script>
+      <script src="/js/formValidation.js"></script>
+    <% } else { %>
+      <p style="margin-top: var(--spacing-lg); color: var(--gray-600); text-align: center;">
+        Please <a href="/auth/login" class="btn-link">login</a> first to comment.
+      </p>
+    <% } %>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skill Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+
