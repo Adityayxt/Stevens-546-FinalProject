@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'SkillSwap Skills Exchange Platform' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <h1><a href="/skills">SkillSwap</a></h1>
+      <% if (user) { %>
+        <a href="/skills">Skills Marketplace</a>
+<a href="/skills/new">Publish Skill</a>
+<a href="/profile/myskills">My Skills</a>
+<a href="/profile/me">My Profile</a>
+<a href="/auth/logout">Logout</a>
+      <% } else { %>
+        <a href="/auth/login">Login</a>
+<a href="/auth/register">Register</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main>
