@@ -8,7 +8,6 @@ A skill sharing platform based on Node.js + Express, where users can publish the
 - MongoDB data management
 - Triple validation: client + server + data layer
 - Comments, ratings, favorites, skill category browsing
-- EJS template rendering + frontend interactive JS
 - Complete error handling mechanism
 
 ## 🚀 How to Start the Project
