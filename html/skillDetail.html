@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Detail | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/skills" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/skills">Skills Marketplace</a>
+      <a href="/skills/new">Publish Skill</a>
+      <a href="/profile/myskills">My Skills</a>
+      <a href="/profile/me">My Profile</a>
+      <a href="/profile/favorites">My Favorites</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title" id="skillTitle">Loading...</h1>
+
+  <div class="card" id="skillCard">
+    <p class="skill-detail-description" id="skillDescription">Loading...</p>
+    <div class="card-meta">
+      <span id="skillCategory">Category: Loading...</span>
+    </div>
+    <div class="card-meta">
+      <span id="skillPostedBy">Posted by: Loading...</span>
+    </div>
+    <div class="card-meta">
+      <span id="skillContact">Contact: Loading...</span>
+    </div>
+    <div class="card-meta">
+      <span id="skillPostedOn">Posted on: Loading...</span>
+    </div>
+    <div class="card-meta">
+      <span id="favoriteCount">Favorited by 0 people</span>
+    </div>
+
+    <div id="favoriteSection" style="margin-top: var(--spacing-lg); display: none;">
+      <button id="favoriteBtn" class="btn-primary">
+        <span id="favoriteBtnText">Favorite</span>
+      </button>
+    </div>
+    
+    <div id="loginPrompt" style="margin-top: var(--spacing-lg); color: var(--gray-600); display: none;">
+      Please <a href="/html/login.html" class="btn-link">login</a> to favorite this skill.
+    </div>
+  </div>
+
+  <div class="comment-section">
+    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-900); margin-bottom: var(--spacing-lg);">
+      Comments
+    </h2>
+
+    <div id="commentsContainer">
+      <div class="empty-state empty-state-small">
+        <div class="empty-state-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">💬</div>
+        Loading comments...
+      </div>
+    </div>
+
+    <div id="commentFormSection" style="display: none;">
+      <div id="commentErrors" class="error-message" style="display: none; margin-bottom: var(--spacing-md);"></div>
+      <form id="commentForm" class="comment-form">
+        <div class="input-group">
+          <textarea
+                  id="commentInput"
+                  placeholder="Write your comment..."
+                  required
+                  style="width: 100%;"
+          ></textarea>
+          <div id="commentInputError" class="error-text"></div>
+        </div>
+        <button type="submit" class="btn-primary">
+          <span>Post Comment</span>
+        </button>
+      </form>
+    </div>
+    
+    <div id="commentLoginPrompt" style="margin-top: var(--spacing-lg); color: var(--gray-600); text-align: center; display: none;">
+      Please <a href="/html/login.html" class="btn-link">login</a> first to comment.
+    </div>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skill Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+
+<script src="/js/ajax.js"></script>
+<script src="/js/formValidation.js"></script>
+<script>
+  let currentSkillId = null;
+  let currentUser = null;
+
+  // Get skill ID from URL parameters
+  function getSkillIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const skillId = urlParams.get('id');
+    
+    // Validate skill ID format (basic check)
+    if (!skillId || skillId === 'null' || skillId === 'undefined' || skillId.length !== 24) {
+      console.error('Invalid skill ID:', skillId);
+      return null;
+    }
+    
+    return skillId;
+  }
+
+  // Load skill details
+  async function loadSkillDetails() {
+    currentSkillId = getSkillIdFromUrl();
+    if (!currentSkillId) {
+      document.getElementById('skillTitle').textContent = 'Invalid Skill ID';
+      document.getElementById('skillDescription').textContent = 'The skill ID in the URL is invalid. Please check the link and try again.';
+      return;
+    }
+  
+    try {
+      const response = await fetch(`/api/skills/${currentSkillId}`);
+      if (response.status === 401) {
+        window.location.href = '/html/login.html';
+        return;
+      }
+      
+      if (response.status === 400) {
+        const errorData = await response.json();
+        document.getElementById('skillTitle').textContent = 'Invalid Skill';
+        document.getElementById('skillDescription').textContent = errorData.error || 'Invalid skill ID format.';
+        return;
+      }
+      
+      if (response.status === 404) {
+        document.getElementById('skillTitle').textContent = 'Skill Not Found';
+        document.getElementById('skillDescription').textContent = 'The requested skill could not be found.';
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to load skill details');
+      }
+  
+      const data = await response.json();
+      displaySkillDetails(data);
+    } catch (error) {
+      console.error('Error loading skill details:', error);
+      document.getElementById('skillTitle').textContent = 'Error Loading Skill';
+      document.getElementById('skillDescription').textContent = 'Failed to load skill details. Please try again later.';
+    }
+  }
+
+  // Setup comment form
+  function setupCommentForm() {
+    const form = document.getElementById('commentForm');
+    const input = document.getElementById('commentInput');
+    const errorDiv = document.getElementById('commentErrors');
+    const inputErrorDiv = document.getElementById('commentInputError');
+  
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      
+      const content = input.value.trim();
+      if (!content) {
+        inputErrorDiv.textContent = 'Comment cannot be empty';
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/skills/${currentSkillId}/comment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ content })
+        });
+  
+        if (response.ok) {
+          input.value = '';
+          inputErrorDiv.textContent = '';
+          errorDiv.style.display = 'none';
+          // Reload comments
+          loadSkillDetails();
+        } else {
+          const errorData = await response.json();
+          if (errorData.errors && errorData.errors.length > 0) {
+            errorDiv.textContent = errorData.errors[0];
+          } else {
+            errorDiv.textContent = 'Failed to post comment';
+          }
+          errorDiv.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error posting comment:', error);
+        errorDiv.textContent = 'An error occurred while posting the comment';
+        errorDiv.style.display = 'block';
+      }
+    };
+  }
+
+  // Load skill details when page loads
+  document.addEventListener('DOMContentLoaded', loadSkillDetails);
+  
+  // Display skill details
+  function displaySkillDetails(data) {
+    const { skill, user, isFavorited, favoriteCount, comments } = data;
+    currentUser = user;
+
+    document.title = `${skill.title} | SkillSwap`;
+    document.getElementById('skillTitle').textContent = skill.title;
+    document.getElementById('skillDescription').innerHTML = skill.description.replace(/\n/g, '<br>');
+    document.getElementById('skillCategory').textContent = `Category: ${skill.category}`;
+    document.getElementById('skillPostedBy').textContent = `Posted by: ${skill.postedBy.username}`;
+    document.getElementById('skillContact').textContent = `Contact: ${skill.postedBy.contact || 'Not provided'}`;
+    document.getElementById('skillPostedOn').textContent = `Posted on: ${new Date(skill.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+    document.getElementById('favoriteCount').textContent = `Favorited by ${favoriteCount} people`;
+
+    // Handle favorite section
+    if (user) {
+      document.getElementById('favoriteSection').style.display = 'block';
+      const favoriteBtn = document.getElementById('favoriteBtn');
+      const favoriteBtnText = document.getElementById('favoriteBtnText');
+      
+      if (isFavorited) {
+        favoriteBtn.classList.add('btn-danger');
+        favoriteBtnText.textContent = 'Unfavorite';
+      } else {
+        favoriteBtn.classList.remove('btn-danger');
+        favoriteBtnText.textContent = 'Favorite';
+      }
+      
+      favoriteBtn.onclick = () => toggleFavorite(skill._id, isFavorited);
+    } else {
+      document.getElementById('loginPrompt').style.display = 'block';
+    }
+
+    // Display comments
+    displayComments(comments);
+
+    // Handle comment form
+    if (user) {
+      document.getElementById('commentFormSection').style.display = 'block';
+      setupCommentForm();
+    } else {
+      document.getElementById('commentLoginPrompt').style.display = 'block';
+    }
+  }
+
+  // Display comments
+  function displayComments(comments) {
+    const container = document.getElementById('commentsContainer');
+    
+    if (comments.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state empty-state-small">
+          <div class="empty-state-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">💬</div>
+          No comments yet, be the first to comment!
+        </div>
+      `;
+    } else {
+      container.innerHTML = comments.map(comment => `
+        <div class="comment">
+          <strong style="color: var(--primary-color);">${comment.postedBy.username}</strong>
+          <span style="margin-left: var(--spacing-sm);">${comment.content.replace(/\n/g, '<br>')}</span>
+          <span style="display: block; margin-top: var(--spacing-xs); font-size: 0.875rem; color: var(--gray-500);">
+            ${new Date(comment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Toggle favorite
+  async function toggleFavorite(skillId, currentlyFavorited) {
+    try {
+      const response = await fetch(`/skills/${skillId}/favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Reload the page to update favorite status
+        window.location.reload();
+      } else {
+        console.error('Failed to toggle favorite');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">  
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Skill | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/html/skills.html" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/html/skills.html">Skills Marketplace</a>
+        <a href="/html/skillNew.html">Publish Skill</a>
+        <a href="/html/mySkills.html">My Skills</a>
+        <a href="/html/profile.html">My Profile</a>
+        <a href="/html/myFavorites.html">My Favorites</a>
+        <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">Edit Skill</h1>
+
+  <div class="form-card">
+    <h2 class="form-title">Modify Skill Information</h2>
+
+    <div id="error-message" class="error-message" style="display: none;"></div>
+
+    <form id="editSkillForm" class="skill-form">
+      <div class="input-group">
+        <label for="title">Skill Title</label>
+        <input
+                type="text"
+                name="title"
+                id="title"
+                placeholder="e.g., JavaScript Frontend Development"
+                required
+                style="width: 100%; max-width: 500px;"
+        />
+        <div id="titleError" class="error-text"></div>
+      </div>
+      <div class="input-group">
+        <label for="category">Skill Category</label>
+        <select name="category" id="category" required>
+          <option value="Languages & Translation">Languages & Translation</option>
+          <option value="Academics & Tutoring">Academics & Tutoring</option>
+          <option value="Programming & Technology">Programming & Technology</option>
+          <option value="Design & Creativity">Design & Creativity</option>
+          <option value="Music, Performing Arts & Writing">Music, Performing Arts & Writing</option>
+          <option value="Business, Marketing & Management">Business, Marketing & Management</option>
+          <option value="Cooking & Culinary Arts">Cooking & Culinary Arts</option>
+          <option value="Fitness, Sports & Wellness">Fitness, Sports & Wellness</option>
+          <option value="Lifestyle, Travel & Outdoor Activities">Lifestyle, Travel & Outdoor Activities</option>
+          <option value="Finance & Investment">Finance & Investment</option>
+          <option value="Other">Other</option>
+        </select>
+        <div id="categoryError" class="error-text"></div>
+      </div>
+      <div class="input-group">
+        <label for="description">Skill Description</label>
+        <textarea
+                name="description"
+                id="description"
+                rows="6"
+                placeholder="Describe your skill in detail, including your experience, areas of expertise, etc..."
+                required
+                style="width: 100%; max-width: 500px;"
+        ></textarea>
+        <div id="descriptionError" class="error-text"></div>
+      </div>
+
+      <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+        <button type="submit" class="btn-primary" style="flex: 1;">
+          <span>Save Changes</span>
+        </button>
+        <a href="/html/mySkills.html" class="btn-secondary" style="flex: 1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+          <span>Back</span>
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skill Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+
+<script src="/js/formValidation.js"></script>
+<script>
+// Get skill ID from URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const skillId = urlParams.get('id');
+
+if (!skillId) {
+    window.location.href = '/html/mySkills.html';
+}
+
+// Load skill data when page loads
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const response = await fetch(`/api/skills/${skillId}`);
+        if (response.ok) {
+            const data = await response.json();
+            const skill = data.skill;
+            
+            document.getElementById('title').value = skill.title || '';
+            document.getElementById('category').value = skill.category || '';
+            document.getElementById('description').value = skill.description || '';
+        } else if (response.status === 401) {
+            window.location.href = '/html/login.html';
+        } else {
+            throw new Error('Failed to load skill data');
+        }
+    } catch (error) {
+        console.error('Error loading skill data:', error);
+        document.getElementById('error-message').textContent = 'Failed to load skill data';
+        document.getElementById('error-message').style.display = 'block';
+    }
+});
+
+// Handle form submission
+document.getElementById('editSkillForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        title: formData.get('title'),
+        category: formData.get('category'),
+        description: formData.get('description')
+    };
+    
+    try {
+        const response = await fetch(`/profile/${skillId}?_method=PUT`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            // Redirect to my skills page on success
+            window.location.href = '/html/mySkills.html';
+        } else {
+            const errorData = await response.json();
+            document.getElementById('error-message').textContent = errorData.error || 'Failed to update skill';
+            document.getElementById('error-message').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error updating skill:', error);
+        document.getElementById('error-message').textContent = 'Failed to update skill';
+        document.getElementById('error-message').style.display = 'block';
+    }
+});
+</script>
+</body>
+</html>

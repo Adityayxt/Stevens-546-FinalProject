@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Skills | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/skills" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/skills">Skills Marketplace</a>
+      <a href="/skills/new">Publish Skill</a>
+      <a href="/profile/myskills" class="active-link">My Skills</a>
+      <a href="/profile/me">My Profile</a>
+      <a href="/profile/favorites">My Favorites</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">My Skills</h1>
+
+  <div style="text-align: center; margin-bottom: var(--spacing-xl);">
+    <a href="/skills/new" class="btn-primary" style="display: inline-flex; align-items: center; gap: var(--spacing-sm);">
+      <span>➕</span>
+      <span>Publish New Skill</span>
+    </a>
+  </div>
+
+  <div class="card-container" id="skillsContainer">
+    <div class="empty-state">
+      <span class="empty-state-icon">📝</span>
+      <div class="empty-state-title">Loading...</div>
+      <p class="empty-state-description">Loading your skills...</p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skill Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+
+<script>
+  // Load user's skills
+  async function loadMySkills() {
+    try {
+      const response = await fetch('/api/profile/myskills');
+      if (response.status === 401) {
+        const data = await response.json().catch(() => ({}));
+        showInvalidLoginPrompt(data.message);
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to load skills');
+      }
+
+      const data = await response.json();
+      displaySkills(data.skills);
+    } catch (error) {
+      console.error('Error loading skills:', error);
+      document.getElementById('skillsContainer').innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">❌</span>
+          <div class="empty-state-title">Error Loading Skills</div>
+          <p class="empty-state-description">Failed to load your skills. Please try again.</p>
+        </div>
+      `;
+    }
+  }
+
+  // Show invalid login prompt
+  function showInvalidLoginPrompt(message = 'Current login status is invalid, may have been removed or session expired, please login again.') {
+    document.getElementById('skillsContainer').innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-icon">🔒</span>
+        <div class="empty-state-title">Not Logged In</div>
+        <p class="empty-state-description">${message}</p>
+        <div class="empty-state-actions">
+          <a href="/html/login.html" class="btn-primary">Login Again</a>
+        </div>
+      </div>
+    `;
+  }
+
+  // Display skills
+  function displaySkills(skills) {
+    const container = document.getElementById('skillsContainer');
+    
+    // Add debugging
+    console.log('Skills data:', skills);
+    
+    if (skills.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">📝</span>
+          <div class="empty-state-title">No Skills Published Yet</div>
+          <p class="empty-state-description">You haven't published any skills yet. Come and publish your first skill!</p>
+          <div class="empty-state-actions">
+            <a href="/skills/new" class="btn-primary">Publish Skill</a>
+          </div>
+        </div>
+      `;
+    } else {
+      container.innerHTML = skills.map(skill => {
+        // Add validation for skill._id
+        if (!skill._id) {
+          console.error('Skill missing _id:', skill);
+          return '';
+        }
+        
+        return `
+        <div class="card">
+          <h3 class="card-title">${skill.title}</h3>
+          <p class="card-desc">${skill.description}</p>
+          <div class="card-meta">
+            <span>Category: ${skill.category}</span>
+          </div>
+          <div class="card-meta">
+            <span>Posted on: ${new Date(skill.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
+
+          <div class="flex-actions">
+            <a href="/html/editSkill.html?id=${skill._id}" class="btn-secondary">
+              <span>Edit</span>
+            </a>
+            <button type="button" class="btn-danger" onclick="deleteSkill('${skill._id}')">
+              <span>Delete</span>
+            </button>
+          </div>
+        </div>
+      `}).filter(html => html).join('');
+    }
+  }
+
+  // Delete skill with custom confirmation modal
+  async function deleteSkill(skillId) {
+    // Validate skillId format
+    if (!skillId || !/^[0-9a-fA-F]{24}$/.test(skillId)) {
+      console.error('Invalid skill ID:', skillId);
+      showAlert('Invalid skill ID. Please refresh the page and try again.', 'error');
+      return;
+    }
+
+    // Show custom confirmation dialog
+    const confirmed = await showConfirmDialog(
+      'Delete Skill', 
+      'Are you sure you want to delete this skill? This action cannot be undone.',
+      'Delete',
+      'Cancel'
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/profile/${skillId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        showAlert('Skill deleted successfully!', 'success');
+        // Reload skills after deletion
+        loadMySkills();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showAlert(errorData.error || 'Failed to delete skill. Please try again.', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting skill:', error);
+      showAlert('An error occurred while deleting the skill.', 'error');
+    }
+  }
+
+  // Custom confirmation dialog
+  function showConfirmDialog(title, message, confirmText = 'Confirm', cancelText = 'Cancel') {
+    return new Promise((resolve) => {
+      // Create modal overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      `;
+
+      // Create modal content
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      `;
+
+      modal.innerHTML = `
+        <h3 style="margin: 0 0 1rem 0; color: #333; font-size: 1.25rem;">${title}</h3>
+        <p style="margin: 0 0 2rem 0; color: #666; line-height: 1.5;">${message}</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button id="cancelBtn" style="
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            color: #666;
+            border-radius: 4px;
+            cursor: pointer;
+          ">${cancelText}</button>
+          <button id="confirmBtn" style="
+            padding: 0.5rem 1rem;
+            border: none;
+            background: #dc3545;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+          ">${confirmText}</button>
+        </div>
+      `;
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      // Handle button clicks
+      const confirmBtn = modal.querySelector('#confirmBtn');
+      const cancelBtn = modal.querySelector('#cancelBtn');
+
+      confirmBtn.onclick = () => {
+        document.body.removeChild(overlay);
+        resolve(true);
+      };
+
+      cancelBtn.onclick = () => {
+        document.body.removeChild(overlay);
+        resolve(false);
+      };
+
+      // Close on overlay click
+      overlay.onclick = (e) => {
+        if (e.target === overlay) {
+          document.body.removeChild(overlay);
+          resolve(false);
+        }
+      };
+    });
+  }
+
+  // Custom alert function
+  function showAlert(message, type = 'info') {
+    const colors = {
+      success: '#28a745',
+      error: '#dc3545',
+      info: '#007bff'
+    };
+
+    const alert = document.createElement('div');
+    alert.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${colors[type]};
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1001;
+      max-width: 300px;
+    `;
+    alert.textContent = message;
+
+    document.body.appendChild(alert);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      if (document.body.contains(alert)) {
+        document.body.removeChild(alert);
+      }
+    }, 3000);
+  }
+
+  // Load skills when page loads
+  document.addEventListener('DOMContentLoaded', loadMySkills);
+</script>
+
+</body>
+</html>

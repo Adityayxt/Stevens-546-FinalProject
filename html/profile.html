@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/skills" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/skills">Skills Marketplace</a>
+      <a href="/skills/new">Publish Skill</a>
+      <a href="/profile/myskills">My Skills</a>
+      <a href="/profile/me" class="active-link">My Profile</a>
+      <a href="/profile/favorites">My Favorites</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title" id="welcomeTitle">Loading...</h1>
+
+  <div class="card" id="profileCard">
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--gray-900); margin-bottom: var(--spacing-lg);">
+      Personal Information
+    </h3>
+    <div class="card-meta">
+      <span id="userEmail">Email: Loading...</span>
+    </div>
+    <div class="card-meta contact-info">
+      <span id="userContact">Contact: Loading...</span>
+    </div>
+    <div style="margin-top: var(--spacing-lg);">
+      <a href="/profile/edit" class="btn-primary">
+        <span>Edit Profile</span>
+      </a>
+    </div>
+  </div>
+
+  <h2 style="font-size: 2rem; font-weight: 700; color: var(--gray-900); margin: var(--spacing-2xl) 0 var(--spacing-xl); text-align: center;">
+    My Published Skills
+  </h2>
+
+  <div class="card-container" id="skillsContainer">
+    <div class="empty-state">
+      <span class="empty-state-icon">📝</span>
+      <div class="empty-state-title">Loading...</div>
+      <p class="empty-state-description">Loading your skills...</p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skills Exchange Platform | Where everyone can be a teacher and student
+  </footer>
+</div>
+
+<script>
+  // Load user profile and skills
+  async function loadProfile() {
+    try {
+      const response = await fetch('/api/profile/me');
+      if (response.status === 401) {
+        const data = await response.json().catch(() => ({}));
+        showInvalidLoginPrompt(data.message);
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to load profile');
+      }
+
+      const data = await response.json();
+      displayProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      document.getElementById('welcomeTitle').textContent = 'Error Loading Profile';
+      document.getElementById('userEmail').textContent = 'Email: Failed to load';
+      document.getElementById('userContact').textContent = 'Contact: Failed to load';
+      document.getElementById('skillsContainer').innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">❌</span>
+          <div class="empty-state-title">Error Loading Profile</div>
+          <p class="empty-state-description">Failed to load your profile. Please try again.</p>
+        </div>
+      `;
+    }
+  }
+
+  // Show invalid login prompt
+  function showInvalidLoginPrompt(message = 'Current login status is invalid, may have been removed or session expired, please login again.') {
+    document.getElementById('welcomeTitle').textContent = 'Not Logged In';
+    document.getElementById('profileCard').style.display = 'none';
+    document.getElementById('skillsContainer').innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-icon">🔒</span>
+        <div class="empty-state-title">Not Logged In</div>
+        <p class="empty-state-description">${message}</p>
+        <div class="empty-state-actions">
+          <a href="/html/login.html" class="btn-primary">Login Again</a>
+        </div>
+      </div>
+    `;
+  }
+
+  // Display profile data
+  function displayProfile(data) {
+    const { user, skills } = data;
+    
+    document.getElementById('welcomeTitle').textContent = `Welcome, ${user.username}`;
+    document.getElementById('userEmail').textContent = `Email: ${user.email}`;
+    document.getElementById('userContact').textContent = `Contact: ${user.contact || 'Not provided'}`;
+    
+    displaySkills(skills, user.username);
+  }
+
+  // Display skills
+  function displaySkills(skills, username) {
+    const container = document.getElementById('skillsContainer');
+    
+    if (skills.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">📝</span>
+          <div class="empty-state-title">No Skills Published Yet</div>
+          <p class="empty-state-description">You haven't published any skills yet. Publish your first skill now!</p>
+          <div class="empty-state-actions">
+            <a href="/skills/new" class="btn-primary">Publish Skill</a>
+          </div>
+        </div>
+      `;
+    } else {
+      container.innerHTML = skills.map(skill => `
+        <div class="card">
+          <h3 class="card-title">
+            <a href="/html/skillDetail.html?id=${skill._id}">${skill.title}</a>
+          </h3>
+          <p class="card-desc">${skill.description || 'No description'}</p>
+          <div class="card-meta">
+            <span>Category: ${skill.category}</span>
+          </div>
+          <div class="card-meta">
+            <span>Posted by: ${username}</span>
+          </div>
+          <div class="card-meta">
+            <span>Posted on: ${new Date(skill.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Load profile when page loads
+  document.addEventListener('DOMContentLoaded', loadProfile);
+</script>
+
+</body>
+</html>

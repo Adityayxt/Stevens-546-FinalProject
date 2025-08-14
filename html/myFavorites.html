@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Favorites | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/skills" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/skills">Skills Marketplace</a>
+      <a href="/skills/new">Publish Skill</a>
+      <a href="/profile/myskills">My Skills</a>
+      <a href="/profile/me">My Profile</a>
+      <a href="/profile/favorites" class="active-link">My Favorites</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">My Favorites</h1>
+
+  <div class="card-container" id="favoritesContainer">
+    <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;">
+      <div class="empty-state-icon" style="font-size: 4rem; margin-bottom: 1rem;">❤️</div>
+      <h2 class="empty-state-title" style="font-size: 1.5rem; color: #333; margin-bottom: 0.5rem;">Loading...</h2>
+      <p class="empty-state-description" style="text-align: center; color: #666; margin-bottom: 1.5rem; max-width: 400px;">
+        Loading your favorite skills...
+      </p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skill Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+
+<script>
+  // Load user's favorite skills
+  async function loadMyFavorites() {
+    try {
+      const response = await fetch('/api/profile/favorites');
+      if (response.status === 401) {
+        window.location.href = '/html/login.html';
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to load favorites');
+      }
+
+      const data = await response.json();
+      displayFavorites(data.favorites);
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+      document.getElementById('favoritesContainer').innerHTML = `
+        <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;">
+          <div class="empty-state-icon" style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+          <h2 class="empty-state-title" style="font-size: 1.5rem; color: #333; margin-bottom: 0.5rem;">Error Loading Favorites</h2>
+          <p class="empty-state-description" style="text-align: center; color: #666; margin-bottom: 1.5rem; max-width: 400px;">
+            Failed to load your favorite skills. Please try again.
+          </p>
+        </div>
+      `;
+    }
+  }
+
+  // Display favorite skills
+  function displayFavorites(favorites) {
+    const container = document.getElementById('favoritesContainer');
+    
+    if (favorites.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;">
+          <div class="empty-state-icon" style="font-size: 4rem; margin-bottom: 1rem;">❤️</div>
+          <h2 class="empty-state-title" style="font-size: 1.5rem; color: #333; margin-bottom: 0.5rem;">No Favorites Yet</h2>
+          <p class="empty-state-description" style="text-align: center; color: #666; margin-bottom: 1.5rem; max-width: 400px;">
+            You haven't favorited any skills yet. Explore our marketplace to find amazing skills to learn!
+          </p>
+          <div class="empty-state-actions" style="display: flex; gap: 1rem;">
+            <a href="/html/skills.html" class="btn btn-primary">Browse Skills</a>
+            <a href="/skills/new" class="btn btn-secondary">Share Your Skill</a>
+          </div>
+        </div>
+      `;
+    } else {
+      container.innerHTML = favorites.map(skill => `
+        <div class="card">
+          <h3 class="card-title">
+            <a href="/html/skillDetail.html?id=${skill._id}">${skill.title}</a>
+          </h3>
+          <p class="card-desc">${skill.description}</p>
+          <div class="card-meta">
+            <span>Category: ${skill.category}</span>
+          </div>
+          <div class="card-meta">
+            <span>Posted by: ${skill.postedBy.username}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Load favorites when page loads
+  document.addEventListener('DOMContentLoaded', loadMyFavorites);
+
+  async function loadFavorites() {
+    try {
+      const response = await fetch('/api/profile/favorites');
+      if (response.status === 401) {
+        const data = await response.json().catch(() => ({}));
+        showInvalidLoginPrompt(data.message);
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to load favorites');
+      }
+
+      const data = await response.json();
+      displayFavorites(data.favorites);
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+      document.getElementById('favoritesContainer').innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">❌</span>
+          <div class="empty-state-title">Error Loading Favorites</div>
+          <p class="empty-state-description">Failed to load your favorite skills. Please try again.</p>
+        </div>
+      `;
+    }
+  }
+
+  // Show invalid login prompt
+  function showInvalidLoginPrompt(message = 'Current login status is invalid, may have been removed or session expired, please login again.') {
+    document.getElementById('favoritesContainer').innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-icon">🔒</span>
+        <div class="empty-state-title">Not Logged In</div>
+        <p class="empty-state-description">${message}</p>
+        <div class="empty-state-actions">
+          <a href="/html/login.html" class="btn-primary">Login Again</a>
+        </div>
+      </div>
+    `;
+  }
+</script>
+
+</body>
+</html>
