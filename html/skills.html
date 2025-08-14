@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skills Marketplace | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/skills" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/skills" class="active-link">Skills Marketplace</a>
+        <a href="/skills/new">Publish Skill</a>
+        <a href="/profile/myskills">My Skills</a>
+        <a href="/profile/me">My Profile</a>
+        <a href="/profile/favorites">My Favorites</a>
+        <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">Skills Marketplace</h1>
+
+  <form class="filter-form" id="filterForm">
+    <div class="filter-wrap">
+      <label for="category">Filter by category:</label>
+      <select name="category" id="category">
+        <option value="">All Categories</option>
+        <option value="Languages & Translation">Languages & Translation</option>
+        <option value="Academics & Tutoring">Academics & Tutoring</option>
+        <option value="Programming & Technology">Programming & Technology</option>
+        <option value="Design & Creativity">Design & Creativity</option>
+        <option value="Music, Performing Arts & Writing">Music, Performing Arts & Writing</option>
+        <option value="Business, Marketing & Management">Business, Marketing & Management</option>
+        <option value="Cooking & Culinary Arts">Cooking & Culinary Arts</option>
+        <option value="Fitness, Sports & Wellness">Fitness, Sports & Wellness</option>
+        <option value="Lifestyle, Travel & Outdoor Activities">Lifestyle, Travel & Outdoor Activities</option>
+        <option value="Finance & Investment">Finance & Investment</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+  </form>
+
+  <div class="card-container" id="skillsContainer">
+    <div class="loading">Loading skills...</div>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skill Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+
+<script>
+let allSkills = [];
+let currentCategory = '';
+
+// Load skills from API
+async function loadSkills() {
+  try {
+    const response = await fetch('/api/skills');
+    if (!response.ok) {
+      if (response.status === 401) {
+        const data = await response.json().catch(() => ({}));
+        showInvalidLoginPrompt(data.message);
+        return;
+      }
+      throw new Error('Failed to load skills');
+    }
+    const data = await response.json();
+    allSkills = data.skills;
+    renderSkills();
+  } catch (error) {
+    console.error('Error loading skills:', error);
+    document.getElementById('skillsContainer').innerHTML = '<div class="error">Failed to load skills. Please try again.</div>';
+  }
+}
+
+// Show invalid login prompt
+function showInvalidLoginPrompt(message = 'Current login status is invalid, may have been removed or session expired, please login again.') {
+  document.getElementById('skillsContainer').innerHTML = `
+    <div class="empty-state">
+      <span class="empty-state-icon">🔒</span>
+      <div class="empty-state-title">Not Logged In</div>
+      <p class="empty-state-description">${message}</p>
+      <div class="empty-state-actions">
+        <a href="/html/login.html" class="btn-primary">Login Again</a>
+      </div>
+    </div>
+  `;
+}
+
+// Render skills based on current filter
+function renderSkills() {
+  const container = document.getElementById('skillsContainer');
+  let filteredSkills = allSkills;
+  
+  if (currentCategory) {
+    filteredSkills = allSkills.filter(skill => skill.category === currentCategory);
+  }
+  
+  if (filteredSkills.length === 0) {
+    container.innerHTML = '<div class="empty-state">No skills available yet. Come and publish the first skill!</div>';
+    return;
+  }
+  
+  const skillsHTML = filteredSkills.map(skill => `
+    <div class="card">
+      <h3 class="card-title">
+        <a href="/html/skillDetail.html?id=${skill._id}">${skill.title}</a>
+      </h3>
+      <p class="card-desc">${skill.description}</p>
+      <div class="card-meta">
+        <span>Category: ${skill.category}</span>
+      </div>
+      <div class="card-meta">
+        <span>Posted by: ${skill.postedBy.username}</span>
+      </div>
+      <div class="card-meta">
+        <span>Posted on: ${new Date(skill.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+      </div>
+    </div>
+  `).join('');
+  
+  container.innerHTML = skillsHTML;
+}
+
+// Handle category filter
+document.getElementById('category').addEventListener('change', function() {
+  currentCategory = this.value;
+  renderSkills();
+});
+
+// Load skills on page load
+window.addEventListener('DOMContentLoaded', loadSkills);
+</script>
+</body>
+</html>
