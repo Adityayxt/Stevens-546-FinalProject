@@ -38,12 +38,13 @@
                 placeholder="e.g., JavaScript Frontend Development"
                 required
                 style="width: 100%; max-width: 500px;"
-        />
+        >
         <div id="titleError" class="error-text"></div>
       </div>
       <div class="input-group">
         <label for="category">Skill Category</label>
         <select name="category" id="category" required>
+          <option value="">Select a category</option>
           <option value="Languages & Translation">Languages & Translation</option>
           <option value="Academics & Tutoring">Academics & Tutoring</option>
           <option value="Programming & Technology">Programming & Technology</option>
@@ -120,40 +121,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-// Handle form submission
-document.getElementById('editSkillForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const data = {
-        title: formData.get('title'),
-        category: formData.get('category'),
-        description: formData.get('description')
-    };
-    
-    try {
-        const response = await fetch(`/profile/${skillId}?_method=PUT`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        
-        if (response.ok) {
-            // Redirect to my skills page on success
-            window.location.href = '/html/mySkills.html';
-        } else {
-            const errorData = await response.json();
-            document.getElementById('error-message').textContent = errorData.error || 'Failed to update skill';
-            document.getElementById('error-message').style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Error updating skill:', error);
-        document.getElementById('error-message').textContent = 'Failed to update skill';
-        document.getElementById('error-message').style.display = 'block';
-    }
-});
+// Form submission is handled by formValidation.js
+// No need for custom submission handler
+// The initializeEditSkillValidation function in formValidation.js will handle validation and submission
 </script>
 </body>
 </html>
