@@ -13,11 +13,11 @@ async function seed() {
 
   // Create Different Users
   const users = [
-    { username: 'jack', email: 'jack@example.com', password: '123456' },
-    { username: 'jane', email: 'jane@example.com', password: '123456' },
-    { username: 'mike', email: 'mike@example.com', password: '123456' },
-    { username: 'sarah', email: 'sarah@example.com', password: '123456' },
-    { username: 'david', email: 'david@example.com', password: '123456' },
+    { username: 'jack', email: 'jack@example.com', password: 'Jack@123456', contact: 'jack@example.com' },
+    { username: 'jane', email: 'jane@example.com', password: 'Jane@123456', contact: '+1 555-1234' },
+    { username: 'mike', email: 'mike@example.com', password: 'Mike@123456', contact: 'mike_skiller@twitter.com' },
+    { username: 'sarah', email: 'sarah@example.com', password: 'Sarah@123456', contact: 'https://sarahportfolio.com' },
+    { username: 'david', email: 'david@example.com', password: 'David@123456', contact: 'david.dev#1234' },
   ];
 
   const savedUsers = [];
@@ -27,7 +27,7 @@ async function seed() {
       username: userData.username,
       password: hashed,
       email: userData.email,
-      contact: 'Email',
+      contact: userData.contact,
     });
     savedUsers.push(await user.save());
   }
@@ -125,12 +125,16 @@ async function seed() {
   };
 
   const prefixes = [
-    'I can',
+    'I can teach',
     'Expert in',
-    'Good at',
-    'Love',
-    'Learning',
-    'Happy to share',
+    'Proficient in',
+    'Skilled at',
+    'Offering lessons in',
+    'Passionate about teaching',
+    'Available for tutoring in',
+    'Experienced with',
+    'Can help with',
+    'Specializing in',
   ];
 
   function getRandom(arr) {
@@ -184,7 +188,21 @@ async function seed() {
     const students = Math.floor(Math.random() * 500) + 10; 
     const specificArea = getRandom(specificAreas[category]);
     
-    const title = `${prefix} ${skillName}`;
+    // Create grammatically correct title
+    let title;
+    if (prefix.endsWith('in') || prefix.endsWith('at') || prefix.endsWith('with')) {
+      title = `${prefix} ${skillName}`;
+    } else if (prefix.includes('teach') || prefix.includes('lessons') || prefix.includes('tutoring')) {
+      // For verbs like teach, use the gerund form if needed
+      if (skillName.endsWith('ing')) {
+        title = `${prefix} ${skillName}`;
+      } else {
+        // Convert skill name to gerund form if it's a noun
+        title = `${prefix} ${skillName.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase())}`;
+      }
+    } else {
+      title = `${prefix} ${skillName}`;
+    }
     
     
     let description = getRandom(descriptionTemplates);
