@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="login-wrapper">
+  <div class="login-box">
+    <h1 class="login-title">SkillSwap</h1>
+    <p style="color: var(--gray-600); margin-bottom: var(--spacing-xl);">Skill Exchange Platform</p>
+
+    <div class="error-message" id="errorMessage" style="display: none;"></div>
+
+    <form action="/auth/login" method="POST" class="login-form" id="loginForm">
+      <div class="input-group">
+        <input
+                name="username"
+                id="username"
+                type="text"
+                placeholder="Please enter username"
+                required
+                autocomplete="username"
+        />
+        <div class="error-text" id="usernameError"></div>
+      </div>
+      
+      <div class="input-group">
+        <input
+                name="password"
+                id="password"
+                type="password"
+                placeholder="Please enter password"
+                required
+                autocomplete="current-password"
+        />
+        <div class="error-text" id="passwordError"></div>
+      </div>
+      
+      <button type="submit" class="login-button">
+        <span>Login</span>
+      </button>
+    </form>
+
+    <a href="/html/register.html" class="register-link">Don't have an account? Register now</a>
+  </div>
+</div>
+<script src="/js/formValidation.js"></script>
+<script>
+// Handle URL parameters for error messages and form data
+window.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const error = urlParams.get('error');
+  const username = urlParams.get('username');
+  
+  if (error) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = error;
+    errorDiv.style.display = 'block';
+  }
+  
+  if (username) {
+    document.getElementById('username').value = username;
+  }
+});
+</script>
+</body>
+</html>

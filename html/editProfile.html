@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Profile | SkillSwap</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page-wrapper">
+  <header class="nav">
+    <a href="/html/skills.html" class="logo">SkillSwap</a>
+    <nav class="nav-links">
+      <a href="/html/skills.html">Skills Marketplace</a>
+      <a href="/html/skillNew.html">Publish Skill</a>
+      <a href="/html/mySkills.html">My Skills</a>
+      <a href="/html/profile.html">My Profile</a>
+      <a href="/html/myFavorites.html">My Favorites</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">Edit Profile</h1>
+
+  <div class="form-card">
+    <h2 class="form-title">Edit Personal Information</h2>
+
+    <div id="error-message" class="error-message" style="display: none;"></div>
+
+    <form id="editProfileForm" class="skill-form">
+      <div>
+        <label for="username">Username</label>
+        <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Please enter username"
+                required
+        />
+      </div>
+
+      <div>
+        <label for="email">Email Address</label>
+        <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Please enter email address"
+                required
+        />
+        <div id="emailError" class="error-message" style="display: none;"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="contact">Contact</label>
+        <input type="text" class="form-control" id="contact" name="contact">
+        <div class="hint-text" style="font-size: 0.875rem; color: var(--gray-500); margin-top: 0.25rem;">
+          This field is publicly visible and optional
+        </div>
+      </div>
+
+      <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+        <button type="submit" class="btn-primary" style="flex: 1;">
+          <span>Save Changes</span>
+        </button>
+        <a href="/html/profile.html" class="btn-secondary" style="flex: 1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+          <span>Back</span>
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <footer class="footer">
+    © 2025 SkillSwap Skills Exchange Platform | Enabling everyone to be both teacher and student
+  </footer>
+</div>
+
+<script src="/js/formValidation.js"></script>
+<script>
+// Load user data when page loads
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const response = await fetch('/api/profile/me');
+        if (response.ok) {
+            const data = await response.json();
+            const user = data.user;
+            
+            document.getElementById('username').value = user.username || '';
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('contact').value = user.contact || '';
+        } else if (response.status === 401) {
+            window.location.href = '/html/login.html';
+        } else {
+            throw new Error('Failed to load user data');
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        document.getElementById('error-message').textContent = 'Failed to load user data';
+        document.getElementById('error-message').style.display = 'block';
+    }
+});
+
+// Handle form submission
+document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        username: formData.get('username'),
+        email: formData.get('email'),
+        contact: formData.get('contact')
+    };
+    
+    try {
+        const response = await fetch('/profile/edit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            // Redirect to profile page on success
+            window.location.href = '/html/profile.html';
+        } else {
+            const errorData = await response.json();
+            document.getElementById('error-message').textContent = errorData.error || 'Failed to update profile';
+            document.getElementById('error-message').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        document.getElementById('error-message').textContent = 'Failed to update profile';
+        document.getElementById('error-message').style.display = 'block';
+    }
+});
+</script>
+</body>
+</html>
