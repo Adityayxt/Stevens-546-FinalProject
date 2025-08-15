@@ -99,6 +99,9 @@
           <div class="card-meta">
             <span>Posted by: ${skill.postedBy.username}</span>
           </div>
+          <div class="card-meta">
+            <span>Posted on: ${new Date(skill.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
         </div>
       `).join('');
     }
