@@ -522,7 +522,9 @@ document.addEventListener('DOMContentLoaded', () => {
      }
 
      // Form submission validation for edit skill form
-     form.addEventListener('submit', (e) => {
+     form.addEventListener('submit', async (e) => {
+       e.preventDefault();
+
        const titleErr = titleInput ? validateSkillTitle(titleInput.value) : '';
        const categoryErr = categorySelect ? validateSkillCategory(categorySelect.value) : '';
        const descriptionErr = descriptionTextarea ? validateSkillDescription(descriptionTextarea.value) : '';
@@ -532,8 +534,53 @@ document.addEventListener('DOMContentLoaded', () => {
        if (descriptionError) showError(descriptionError, descriptionErr);
 
        if (titleErr || categoryErr || descriptionErr) {
-         e.preventDefault();
          return false;
+       }
+
+       // If validation passes, proceed with submission
+       const formData = new FormData(form);
+       const data = {
+         title: formData.get('title'),
+         category: formData.get('category'),
+         description: formData.get('description')
+       };
+
+       // Get skill ID from URL parameters
+       const urlParams = new URLSearchParams(window.location.search);
+       const skillId = urlParams.get('id');
+
+       if (!skillId) {
+         window.location.href = '/html/mySkills.html';
+         return;
+       }
+
+       try {
+         const response = await fetch(`/profile/${skillId}?_method=PUT`, {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json'
+           },
+           body: JSON.stringify(data)
+         });
+
+         if (response.ok) {
+           // Redirect to my skills page on success
+           window.location.href = '/html/mySkills.html';
+         } else {
+           const errorData = await response.json();
+           const errorMessage = document.getElementById('error-message');
+           if (errorMessage) {
+             errorMessage.textContent = errorData.error || 'Failed to update skill';
+             errorMessage.style.display = 'block';
+           }
+         }
+       } catch (error) {
+         console.error('Error updating skill:', error);
+         const errorMessage = document.getElementById('error-message');
+         if (errorMessage) {
+           errorMessage.textContent = 'Failed to update skill';
+           errorMessage.style.display = 'block';
+         }
        }
      });
    }
