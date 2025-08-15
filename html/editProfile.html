@@ -35,9 +35,10 @@
                 type="text"
                 id="username"
                 name="username"
-                placeholder="Please enter username"
+                placeholder="Please enter username (3-20 letters and numbers only)"
                 required
-        />
+        >
+        <div id="usernameError" class="error-message" style="display: none;"></div>
       </div>
 
       <div>
@@ -48,15 +49,16 @@
                 name="email"
                 placeholder="Please enter email address"
                 required
-        />
+        >
         <div id="emailError" class="error-message" style="display: none;"></div>
       </div>
 
       <div class="form-group">
         <label for="contact">Contact</label>
-        <input type="text" class="form-control" id="contact" name="contact">
+        <input type="text" class="form-control" id="contact" name="contact" maxlength="50">
+        <div id="contactError" class="error-message" style="display: none;"></div>
         <div class="hint-text" style="font-size: 0.875rem; color: var(--gray-500); margin-top: 0.25rem;">
-          This field is publicly visible and optional
+          This field is publicly visible, optional, and limited to 50 characters
         </div>
       </div>
 
@@ -81,14 +83,35 @@
 // Load user data when page loads
 document.addEventListener('DOMContentLoaded', async function() {
     try {
+        // Parse URL parameters for errors
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const emailError = urlParams.get('emailError');
+        const contactError = urlParams.get('contactError');
+        
+        if (error) {
+            document.getElementById('error-message').textContent = error;
+            document.getElementById('error-message').style.display = 'block';
+        }
+        
+        if (emailError) {
+            document.getElementById('emailError').textContent = emailError;
+            document.getElementById('emailError').style.display = 'block';
+        }
+        
+        if (contactError) {
+            document.getElementById('contactError').textContent = contactError;
+            document.getElementById('contactError').style.display = 'block';
+        }
+        
         const response = await fetch('/api/profile/me');
         if (response.ok) {
             const data = await response.json();
             const user = data.user;
             
-            document.getElementById('username').value = user.username || '';
-            document.getElementById('email').value = user.email || '';
-            document.getElementById('contact').value = user.contact || '';
+            document.getElementById('username').value = urlParams.get('username') || user.username || '';
+            document.getElementById('email').value = urlParams.get('email') || user.email || '';
+            document.getElementById('contact').value = urlParams.get('contact') || user.contact || '';
         } else if (response.status === 401) {
             window.location.href = '/html/login.html';
         } else {
@@ -101,9 +124,123 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+// Add real-time validation for username, email, and contact
+
+document.getElementById('username').addEventListener('input', function() {
+    const username = this.value.trim();
+    const usernameError = document.getElementById('usernameError');
+    const usernameRegex = /^[a-zA-Z0-9]{3,20}$/;
+    
+    if (username && !usernameRegex.test(username)) {
+        usernameError.textContent = 'Username must be 3-20 characters and only contain letters or numbers';
+        usernameError.style.display = 'block';
+    } else if (usernameError.style.display !== 'none') {
+        usernameError.style.display = 'none';
+    }
+});
+
+document.getElementById('username').addEventListener('blur', function() {
+    const username = this.value.trim();
+    const usernameError = document.getElementById('usernameError');
+    const usernameRegex = /^[a-zA-Z0-9]{3,20}$/;
+    
+    if (username && !usernameRegex.test(username)) {
+        usernameError.textContent = 'Username must be 3-20 characters and only contain letters or numbers';
+        usernameError.style.display = 'block';
+    } else if (usernameError.style.display !== 'none') {
+        usernameError.style.display = 'none';
+    }
+});
+document.getElementById('contact').addEventListener('blur', function() {
+    const contact = this.value.trim();
+    const contactError = document.getElementById('contactError');
+    
+    if (contact.length > 50) {
+        contactError.textContent = 'Contact information cannot exceed 50 characters';
+        contactError.style.display = 'block';
+    } else {
+        contactError.style.display = 'none';
+    }
+});
+
+document.getElementById('contact').addEventListener('input', function() {
+    const contact = this.value.trim();
+    const contactError = document.getElementById('contactError');
+    
+    if (contact.length > 50) {
+        contactError.textContent = 'Contact information cannot exceed 50 characters';
+        contactError.style.display = 'block';
+    } else if (contactError.style.display !== 'none') {
+        contactError.style.display = 'none';
+    }
+});
+
+document.getElementById('username').addEventListener('blur', async function() {
+    const username = this.value.trim();
+    if (username) {
+        try {
+            const response = await fetch('/profile/check-username', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.exists) {
+                    document.getElementById('error-message').textContent = 'Username is already taken';
+                    document.getElementById('error-message').style.display = 'block';
+                } else {
+                    document.getElementById('error-message').style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking username:', error);
+        }
+    }
+});
+
+document.getElementById('email').addEventListener('blur', async function() {
+    const email = this.value.trim();
+    if (email) {
+        try {
+            const response = await fetch('/profile/check-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.exists) {
+                    document.getElementById('emailError').textContent = 'Email is already taken';
+                    document.getElementById('emailError').style.display = 'block';
+                } else {
+                    document.getElementById('emailError').style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking email:', error);
+        }
+    }
+});
+
 // Handle form submission
 document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    // Check if there are any visible error messages
+    const errorMessage = document.getElementById('error-message');
+    const usernameError = document.getElementById('usernameError');
+    const emailError = document.getElementById('emailError');
+    const contactError = document.getElementById('contactError');
+    
+    if (errorMessage.style.display !== 'none' || usernameError.style.display !== 'none' || emailError.style.display !== 'none' || contactError.style.display !== 'none') {
+        // There are visible error messages, do not submit the form
+        return;
+    }
     
     const formData = new FormData(this);
     const data = {
@@ -125,16 +262,29 @@ document.getElementById('editProfileForm').addEventListener('submit', async func
             // Redirect to profile page on success
             window.location.href = '/html/profile.html';
         } else {
+            // If response is not ok, redirect to editProfile with error params
             const errorData = await response.json();
-            document.getElementById('error-message').textContent = errorData.error || 'Failed to update profile';
-            document.getElementById('error-message').style.display = 'block';
+            const params = new URLSearchParams({
+                username: data.username || '',
+                email: data.email || '',
+                contact: data.contact || ''
+            });
+            
+            if (errorData.error) {
+                params.append('error', errorData.error);
+            }
+            
+            if (errorData.emailError) {
+                params.append('emailError', errorData.emailError);
+            }
+            
+            window.location.href = `/html/editProfile.html?${params.toString()}`;
         }
     } catch (error) {
         console.error('Error updating profile:', error);
         document.getElementById('error-message').textContent = 'Failed to update profile';
         document.getElementById('error-message').style.display = 'block';
     }
-});
-</script>
+});</script>
 </body>
 </html>
