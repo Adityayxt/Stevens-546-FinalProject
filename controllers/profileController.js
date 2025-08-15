@@ -2,13 +2,6 @@ import Skill from '../models/Skill.js';
 import User from '../models/User.js';
 import { validateSkill, compressWhitespace, isValidUsername } from '../utils/validator.js';
 
-// Remove functions that are no longer needed as API endpoints exist
-// export const getMySkills - removed, use /api/profile/myskills
-// export const renderEditSkill - removed, redirect to HTML directly
-// export const renderProfile - removed, use /api/profile/me  
-// export const renderProfileEdit - removed, redirect to HTML directly
-// export const getMyFavorites - removed, use /api/profile/favorites
-
 export const updateSkill = async (req, res) => {
   try {
     const skill = await Skill.findById(req.params.id);
@@ -131,7 +124,22 @@ export const updateProfile = async (req, res) => {
       user.email = email;
     }
 
-    user.contact = contact;
+    // Contact validation
+    if (contact) {
+        if (contact.length > 50) {
+            const params = new URLSearchParams({
+                contactError: 'Contact information cannot exceed 50 characters',
+                username: username || '',
+                email: email || '',
+                contact: contact || ''
+            });
+            return res.redirect(`/html/editProfile.html?${params.toString()}`);
+        }
+        user.contact = contact;
+    } else {
+        user.contact = '';
+    }
+    
     await user.save();
 
     req.session.user.username = user.username;
