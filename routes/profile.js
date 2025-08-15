@@ -40,7 +40,7 @@ router.post('/check-username', requireAuth, async (req, res) => {
     if (!isValidUsername(username)) {
       return res.status(400).json({
         exists: false,
-        error: 'Username must be 3-20 characters and contain only letters, numbers, and underscores'
+        error: 'Username must be 3-20 characters and contain letters or numbers'
       });
     }
 
